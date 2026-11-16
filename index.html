@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="es-CL">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#1f5c4a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Gastos">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<link rel="manifest" href="manifest.json">
+<title>Gastos B&amp;A</title>
+<style>
+  :root {
+    --bg: #f6f4ef; --card: #ffffff; --ink: #1d2421; --muted: #6b736f; --line: #e4e0d7;
+    --accent: #1f5c4a; --accent-ink: #ffffff; --soft: #e8efe9;
+    --bastien: #2f5d8a; --antonia: #b5523b; --comun: #6d7a2f;
+    --danger: #b3261e; --ok: #1f7a4d;
+    --radius: 16px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121614; --card: #1b201e; --ink: #ecefed; --muted: #9aa49f; --line: #2c3330;
+      --accent: #5fb394; --accent-ink: #0d1a15; --soft: #22302a;
+      --bastien: #7fa8d6; --antonia: #e38b74; --comun: #b3c06a;
+      --danger: #ff8a80; --ok: #6fd3a0;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    font-size: 16px; line-height: 1.4;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+  }
+  button, input, select { font: inherit; color: inherit; }
+  .hidden { display: none !important; }
+  .wrap { max-width: 520px; margin: 0 auto; padding: 16px 16px 120px; }
+
+  /* ---------- Encabezado ---------- */
+  header.top { display: flex; align-items: center; justify-content: space-between; padding: 8px 0 12px; }
+  header.top h1 { font-size: 22px; margin: 0; letter-spacing: -0.02em; }
+  header.top .reparto { font-size: 13px; color: var(--muted); }
+  .link { background: none; border: 0; color: var(--muted); font-size: 14px; padding: 8px; cursor: pointer; }
+
+  /* ---------- Tarjetas ---------- */
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+  .card h2 { font-size: 15px; margin: 0 0 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+
+  /* ---------- Formulario ---------- */
+  .monto { display: flex; align-items: baseline; gap: 6px; border-bottom: 2px solid var(--line); padding-bottom: 6px; margin-bottom: 16px; }
+  .monto:focus-within { border-color: var(--accent); }
+  .monto span { font-size: 32px; font-weight: 600; color: var(--muted); }
+  .monto input { border: 0; background: transparent; outline: none; font-size: 40px; font-weight: 700; width: 100%; letter-spacing: -0.02em; }
+  .field { margin-bottom: 14px; }
+  .field > label, .label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+  .field input[type=date], .field input[type=text], .field select {
+    width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg);
+    font-size: 16px; min-height: 46px; -webkit-appearance: none; appearance: none;
+  }
+  .field select {
+    padding-right: 34px; text-overflow: ellipsis;
+    background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position: calc(100% - 20px) 50%, calc(100% - 14px) 50%; background-size: 6px 6px; background-repeat: no-repeat;
+  }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .seg { display: grid; gap: 6px; grid-auto-flow: column; grid-auto-columns: 1fr; }
+  .seg button {
+    border: 1px solid var(--line); background: var(--bg); border-radius: 12px; padding: 12px 6px; min-height: 46px;
+    font-weight: 600; cursor: pointer; transition: background .15s, color .15s, border-color .15s;
+  }
+  .seg button[aria-pressed=true] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .seg button[data-v=Bastien][aria-pressed=true] { background: var(--bastien); border-color: var(--bastien); color: #fff; }
+  .seg button[data-v=Antonia][aria-pressed=true] { background: var(--antonia); border-color: var(--antonia); color: #fff; }
+  .seg button[data-v="Común"][aria-pressed=true] { background: var(--comun); border-color: var(--comun); color: #fff; }
+
+  .stepper { display: flex; align-items: center; gap: 12px; }
+  .stepper button { width: 46px; height: 46px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); font-size: 22px; cursor: pointer; }
+  .stepper output { font-size: 20px; font-weight: 700; min-width: 28px; text-align: center; }
+  .stepper small { color: var(--muted); }
+
+  .preview { background: var(--soft); border-radius: 12px; padding: 12px; font-size: 14px; margin: 4px 0 14px; }
+  .btn {
+    width: 100%; border: 0; border-radius: 14px; padding: 16px; font-size: 17px; font-weight: 700;
+    background: var(--accent); color: var(--accent-ink); cursor: pointer; min-height: 54px;
+  }
+  .btn:disabled { opacity: .5; }
+  .btn.sec { background: var(--soft); color: var(--ink); }
+  .err { color: var(--danger); font-size: 14px; margin: 8px 0 0; min-height: 1em; }
+
+  /* ---------- Listas ---------- */
+  .list { list-style: none; margin: 0; padding: 0; }
+  .list li { display: flex; justify-content: space-between; gap: 10px; padding: 10px 0; border-top: 1px solid var(--line); }
+  .list li:first-child { border-top: 0; }
+  .list .t { font-weight: 600; }
+  .list .s { font-size: 13px; color: var(--muted); }
+  .list .m { text-align: right; white-space: nowrap; font-weight: 600; }
+  .tag { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; color: #fff; vertical-align: 1px; }
+  .tag.Bastien { background: var(--bastien); } .tag.Antonia { background: var(--antonia); } .tag.Común { background: var(--comun); }
+  .pos { color: var(--bastien); } .neg { color: var(--antonia); }
+  .empty { color: var(--muted); font-size: 14px; padding: 6px 0; }
+
+  /* ---------- Reporte ---------- */
+  .mesnav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .mesnav button { width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); font-size: 20px; cursor: pointer; }
+  .mesnav strong { font-size: 19px; }
+  .hero { text-align: center; padding: 24px 16px; }
+  .hero .quien { font-size: 15px; color: var(--muted); }
+  .hero .cuanto { font-size: 44px; font-weight: 800; letter-spacing: -0.03em; margin: 4px 0; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat { background: var(--bg); border-radius: 12px; padding: 10px 12px; }
+  .stat .k { font-size: 12px; color: var(--muted); }
+  .stat .v { font-weight: 700; font-size: 17px; }
+  .bar { height: 6px; background: var(--soft); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+  .cats li { display: block; }
+  .cats .r { display: flex; justify-content: space-between; }
+
+  /* ---------- Barra inferior ---------- */
+  nav.tabs {
+    position: fixed; left: 0; right: 0; bottom: 0; display: flex; justify-content: center; gap: 8px;
+    background: color-mix(in srgb, var(--card) 92%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--line); padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
+  }
+  nav.tabs button {
+    flex: 1; max-width: 240px; border: 0; background: none; padding: 10px; border-radius: 12px; font-weight: 700; color: var(--muted); cursor: pointer;
+  }
+  nav.tabs button[aria-selected=true] { background: var(--soft); color: var(--accent); }
+
+  /* ---------- PIN ---------- */
+  #pantallaPin { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; }
+  #pantallaPin img { width: 76px; height: 76px; border-radius: 18px; margin-bottom: 14px; }
+  #pantallaPin h1 { margin: 0 0 4px; font-size: 24px; }
+  #pantallaPin p { color: var(--muted); margin: 0 0 20px; }
+  #pin {
+    width: 220px; text-align: center; font-size: 30px; letter-spacing: .5em; padding: 12px 0 12px .5em;
+    border: 1px solid var(--line); border-radius: 14px; background: var(--card); outline: none;
+  }
+  #pin:focus { border-color: var(--accent); }
+  #pantallaPin .btn { width: 220px; margin-top: 14px; }
+
+  /* ---------- Aviso flotante ---------- */
+  .toast {
+    position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(20px);
+    background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 12px; font-weight: 600; opacity: 0;
+    transition: opacity .2s, transform .2s; pointer-events: none; max-width: 90vw; text-align: center; z-index: 10;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .spin { display: inline-block; width: 16px; height: 16px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: s .7s linear infinite; vertical-align: -3px; }
+  @keyframes s { to { transform: rotate(360deg); } }
+  details summary { cursor: pointer; color: var(--accent); font-weight: 600; padding: 4px 0; }
+</style>
+</head>
+<body>
+
+<!-- ===================== PANTALLA PIN ===================== -->
+<section id="pantallaPin" class="hidden">
+  <img src="icon-180.png" alt="">
+  <h1>Gastos B&amp;A</h1>
+  <p>Ingresa el PIN de 6 dígitos</p>
+  <form id="formPin" autocomplete="off">
+    <input id="pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="one-time-code" aria-label="PIN">
+    <div class="err" id="errPin"></div>
+    <button class="btn" id="btnPin" type="submit">Entrar</button>
+  </form>
+</section>
+
+<!-- ===================== APP ===================== -->
+<main id="app" class="hidden">
+  <div class="wrap">
+    <header class="top">
+      <div>
+        <h1 id="titulo">Nuevo gasto</h1>
+        <div class="reparto" id="reparto"></div>
+      </div>
+      <button class="link" id="btnSalir" type="button">Salir</button>
+    </header>
+
+    <!-- ---------- Vista: nuevo gasto ---------- -->
+    <section id="vistaNuevo">
+      <form class="card" id="formGasto" autocomplete="off" novalidate>
+        <div class="monto">
+          <span>$</span>
+          <input id="monto" type="text" inputmode="numeric" placeholder="0" aria-label="Monto">
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label for="fecha">Fecha</label>
+            <input id="fecha" type="date">
+          </div>
+          <div class="field">
+            <label for="categoria">Categoría</label>
+            <select id="categoria"><option value="">Elegir…</option></select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="descripcion">Descripción (opcional)</label>
+          <input id="descripcion" type="text" maxlength="200" placeholder="Ej: Jumbo, cumpleaños…">
+        </div>
+
+        <div class="field">
+          <span class="label">¿Quién pagó?</span>
+          <div class="seg" data-campo="pago">
+            <button type="button" data-v="Bastien">Bastien</button>
+            <button type="button" data-v="Antonia">Antonia</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="label">¿De quién es el gasto?</span>
+          <div class="seg" data-campo="atribucion">
+            <button type="button" data-v="Bastien">Bastien</button>
+            <button type="button" data-v="Antonia">Antonia</button>
+            <button type="button" data-v="Común">Común</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="label">Medio de pago</span>
+          <div class="seg" data-campo="medio">
+            <button type="button" data-v="Crédito">Crédito</button>
+            <button type="button" data-v="Débito">Débito</button>
+            <button type="button" data-v="Efectivo">Efectivo</button>
+          </div>
+        </div>
+
+        <div class="field hidden" id="campoCuotas">
+          <span class="label">Cuotas</span>
+          <div class="stepper">
+            <button type="button" id="menosCuota" aria-label="Menos cuotas">−</button>
+            <output id="cuotas">1</output>
+            <button type="button" id="masCuota" aria-label="Más cuotas">+</button>
+            <small id="detalleCuotas"></small>
+          </div>
+        </div>
+
+        <div class="preview hidden" id="preview"></div>
+        <button class="btn" id="btnGuardar" type="submit">Guardar gasto</button>
+        <div class="err" id="errGasto"></div>
+      </form>
+
+      <div class="card">
+        <h2>Últimos gastos</h2>
+        <ul class="list" id="ultimos"></ul>
+      </div>
+    </section>
+
+    <!-- ---------- Vista: reporte ---------- -->
+    <section id="vistaReporte" class="hidden">
+      <div class="mesnav">
+        <button type="button" id="mesAnterior" aria-label="Mes anterior">‹</button>
+        <strong id="mesNombre"></strong>
+        <button type="button" id="mesSiguiente" aria-label="Mes siguiente">›</button>
+      </div>
+      <div id="reporte"></div>
+    </section>
+  </div>
+
+  <nav class="tabs" role="tablist">
+    <button type="button" role="tab" id="tabNuevo" aria-selected="true">＋ Nuevo gasto</button>
+    <button type="button" role="tab" id="tabReporte" aria-selected="false">Reporte</button>
+  </nav>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script>
+/* ==================================================================
+   Página de gastos. Todo pasa por la función api(), que le habla
+   al Apps Script enviando el PIN en cada pedido.
+   ================================================================== */
+(function () {
+  'use strict';
+
+  var $ = function (id) { return document.getElementById(id); };
+  var fmt = new Intl.NumberFormat('es-CL');
+  var plata = function (n) { return '$' + fmt.format(Math.round(n)); };
+
+  var estado = {
+    pin: leer('pin'),
+    config: null,          // { pctBastien, pctAntonia, categorias }
+    form: { pago: null, atribucion: null, medio: null, cuotas: 1 },
+    idPendiente: null,     // para no duplicar si se reintenta un envío
+    mes: mesActual()
+  };
+
+  // ---------- Almacenamiento local (con protección por si falla) ----------
+  function leer(k) { try { return localStorage.getItem('gastos_' + k); } catch (e) { return null; } }
+  function guardar(k, v) { try { v == null ? localStorage.removeItem('gastos_' + k) : localStorage.setItem('gastos_' + k, v); } catch (e) {} }
+
+  // ---------- Fechas ----------
+  function hoyISO() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function mesActual() { return hoyISO().slice(0, 7); }
+  function moverMes(aaaamm, delta) {
+    var p = aaaamm.split('-').map(Number);
+    var i = p[0] * 12 + (p[1] - 1) + delta;
+    return Math.floor(i / 12) + '-' + String(i % 12 + 1).padStart(2, '0');
+  }
+  function nombreMes(aaaamm) {
+    var p = aaaamm.split('-').map(Number);
+    var m = new Date(p[0], p[1] - 1, 1).toLocaleDateString('es-CL', { month: 'long' });
+    return m.charAt(0).toUpperCase() + m.slice(1) + ' ' + p[0];
+  }
+  function fechaCorta(iso) {
+    var p = iso.split('-').map(Number);
+    return new Date(p[0], p[1] - 1, p[2]).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' });
+  }
+
+  // ---------- Comunicación con Google ----------
+  function api(accion, datos) {
+    if (!window.API_URL) return Promise.reject(new Error('Falta pegar la URL del Apps Script en config.js'));
+    return fetch(window.API_URL, {
+      method: 'POST',
+      // text/plain evita un paso extra del navegador que Apps Script no soporta
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ pin: estado.pin, accion: accion, datos: datos || {} }),
+      redirect: 'follow'
+    }).then(function (r) {
+      if (!r.ok) throw new Error('El servidor respondió ' + r.status);
+      return r.json();
+    }).then(function (res) {
+      if (!res.ok && ['PIN_INCORRECTO', 'BLOQUEADO', 'SIN_PIN'].indexOf(res.error) >= 0) {
+        cerrarSesion(mensajePin(res));
+        var e = new Error(res.mensaje); e.manejado = true; throw e;
+      }
+      return res;
+    });
+  }
+
+  function mensajePin(res) {
+    if (res.error === 'BLOQUEADO') return 'Acceso bloqueado por intentos fallidos. Intenta en ' + res.minutos + ' min.';
+    if (res.error === 'PIN_INCORRECTO') return 'PIN incorrecto. Te quedan ' + res.restantes + ' intento' + (res.restantes === 1 ? '' : 's') + '.';
+    return res.mensaje || '';
+  }
+
+  // ---------- PIN ----------
+  function mostrarPin(msg) {
+    $('app').classList.add('hidden');
+    $('pantallaPin').classList.remove('hidden');
+    $('errPin').textContent = msg || '';
+    $('pin').value = '';
+    setTimeout(function () { $('pin').focus(); }, 50);
+  }
+
+  function cerrarSesion(msg) {
+    estado.pin = null; guardar('pin', null);
+    mostrarPin(msg);
+  }
+
+  $('pin').addEventListener('input', function () {
+    this.value = this.value.replace(/\D/g, '').slice(0, 6);
+    if (this.value.length === 6) $('formPin').requestSubmit ? $('formPin').requestSubmit() : $('btnPin').click();
+  });
+
+  $('formPin').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var pin = $('pin').value;
+    if (!/^\d{6}$/.test(pin)) { $('errPin').textContent = 'El PIN tiene 6 dígitos.'; return; }
+    estado.pin = pin;
+    $('btnPin').disabled = true; $('btnPin').innerHTML = '<span class="spin"></span>';
+    $('errPin').textContent = '';
+    iniciar().then(function (ok) {
+      if (ok) guardar('pin', pin);
+    }).finally(function () {
+      $('btnPin').disabled = false; $('btnPin').textContent = 'Entrar';
+    });
+  });
+
+  $('btnSalir').addEventListener('click', function () { cerrarSesion(''); });
+
+  // ---------- Inicio: valida PIN y trae configuración ----------
+  function iniciar() {
+    return api('inicio').then(function (res) {
+      if (!res.ok) throw new Error(res.mensaje || 'Error');
+      estado.config = res.config;
+      armarCategorias();
+      $('reparto').textContent = 'Reparto común: Bastien ' + fmtPct(res.config.pctBastien) + ' / Antonia ' + fmtPct(res.config.pctAntonia);
+      pintarUltimos(res.ultimos);
+      $('pantallaPin').classList.add('hidden');
+      $('app').classList.remove('hidden');
+      return true;
+    }).catch(function (e) {
+      if (!e.manejado) {
+        if (estado.config) { aviso(e.message); }
+        else mostrarPin('No se pudo conectar: ' + e.message);
+      }
+      return false;
+    });
+  }
+  function fmtPct(n) { return String(Math.round(n * 100) / 100).replace('.', ',') + '%'; }
+
+  function armarCategorias() {
+    var sel = $('categoria'), actual = sel.value;
+    sel.innerHTML = '<option value="">Elegir…</option>';
+    estado.config.categorias.forEach(function (c) {
+      var o = document.createElement('option'); o.value = c; o.textContent = c; sel.appendChild(o);
+    });
+    sel.value = actual;
+  }
+
+  // ---------- Formulario de gasto ----------
+  function montoActual() { return Number($('monto').value.replace(/\D/g, '')) || 0; }
+
+  $('monto').addEventListener('input', function () {
+    var n = this.value.replace(/\D/g, '').replace(/^0+/, '').slice(0, 11);
+    this.value = n ? fmt.format(Number(n)) : '';
+    actualizarVista();
+  });
+
+  document.querySelectorAll('.seg').forEach(function (grupo) {
+    grupo.addEventListener('click', function (ev) {
+      var b = ev.target.closest('button'); if (!b) return;
+      estado.form[grupo.dataset.campo] = b.dataset.v;
+      if (grupo.dataset.campo === 'pago') guardar('ultimoPago', b.dataset.v);
+      actualizarVista();
+    });
+  });
+
+  $('menosCuota').addEventListener('click', function () { estado.form.cuotas = Math.max(1, estado.form.cuotas - 1); actualizarVista(); });
+  $('masCuota').addEventListener('click', function () { estado.form.cuotas = Math.min(48, estado.form.cuotas + 1); actualizarVista(); });
+
+  function actualizarVista() {
+    var f = estado.form;
+    document.querySelectorAll('.seg').forEach(function (g) {
+      g.querySelectorAll('button').forEach(function (b) {
+        b.setAttribute('aria-pressed', String(f[g.dataset.campo] === b.dataset.v));
+      });
+    });
+
+    var credito = f.medio === 'Crédito';
+    $('campoCuotas').classList.toggle('hidden', !credito);
+    if (!credito) f.cuotas = 1;
+    $('cuotas').textContent = f.cuotas;
+    var m = montoActual();
+    $('detalleCuotas').textContent = f.cuotas > 1 && m ? f.cuotas + ' × ~' + plata(Math.floor(m / f.cuotas)) + ' (desde este mes)' : '';
+
+    var txt = textoEfecto(m, f.pago, f.atribucion);
+    $('preview').classList.toggle('hidden', !txt);
+    $('preview').textContent = txt;
+  }
+
+  /** Explica en palabras qué deuda genera el gasto (misma regla que el Apps Script). */
+  function textoEfecto(monto, pago, atrib) {
+    if (!monto || !pago || !atrib || !estado.config) return '';
+    var otro = pago === 'Bastien' ? 'Antonia' : 'Bastien';
+    var deuda;
+    if (atrib === 'Común') {
+      var parteB = Math.round(monto * estado.config.pctBastien / 100);
+      deuda = pago === 'Bastien' ? monto - parteB : parteB;
+    } else {
+      deuda = atrib === pago ? 0 : monto;
+    }
+    if (!deuda) return 'Este gasto no genera deuda (lo pagó quien corresponde).';
+    return 'Con este gasto, ' + otro + ' le debe ' + plata(deuda) + ' a ' + pago + '.';
+  }
+
+  function limpiarFormulario() {
+    $('monto').value = ''; $('descripcion').value = ''; $('categoria').value = '';
+    estado.form = { pago: leer('ultimoPago'), atribucion: null, medio: null, cuotas: 1 };
+    estado.idPendiente = null;
+    actualizarVista();
+  }
+
+  $('formGasto').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var f = estado.form, err = $('errGasto');
+    var datos = {
+      monto: montoActual(), fecha: $('fecha').value, categoria: $('categoria').value,
+      descripcion: $('descripcion').value.trim(), pago: f.pago, atribucion: f.atribucion,
+      medio: f.medio, cuotas: f.cuotas
+    };
+    var falta = !datos.monto ? 'Ingresa el monto.' : !datos.fecha ? 'Elige la fecha.' : !datos.categoria ? 'Elige una categoría.'
+      : !datos.pago ? 'Indica quién pagó.' : !datos.atribucion ? 'Indica de quién es el gasto.' : !datos.medio ? 'Elige el medio de pago.' : '';
+    if (falta) { err.textContent = falta; return; }
+    err.textContent = '';
+
+    // Mismo ID si se reintenta el mismo envío: el servidor no lo duplica.
+    estado.idPendiente = estado.idPendiente || ('g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
+    datos.id = estado.idPendiente;
+
+    var btn = $('btnGuardar');
+    btn.disabled = true; btn.innerHTML = '<span class="spin"></span> Guardando…';
+    api('agregar', datos).then(function (res) {
+      if (!res.ok) { err.textContent = res.mensaje || 'No se pudo guardar.'; return; }
+      pintarUltimos(res.ultimos);
+      limpiarFormulario();
+      aviso('Gasto guardado ✓');
+    }).catch(function (e) {
+      if (!e.manejado) err.textContent = 'No se pudo guardar (' + e.message + '). Revisa tu conexión e intenta de nuevo.';
+    }).finally(function () {
+      btn.disabled = false; btn.textContent = 'Guardar gasto';
+    });
+  });
+
+  // Si el formulario cambia, es un gasto nuevo (nuevo ID).
+  ['monto', 'fecha', 'categoria', 'descripcion'].forEach(function (id) {
+    $(id).addEventListener('change', function () { estado.idPendiente = null; });
+  });
+  document.querySelectorAll('.seg, #campoCuotas').forEach(function (g) {
+    g.addEventListener('click', function () { estado.idPendiente = null; });
+  });
+
+  function pintarUltimos(lista) {
+    var ul = $('ultimos');
+    if (!lista || !lista.length) { ul.innerHTML = '<li class="empty">Aún no hay gastos registrados.</li>'; return; }
+    ul.innerHTML = lista.map(function (g) {
+      var sub = fechaCorta(g.fecha) + ' · pagó ' + esc(g.pago) + ' · ' + esc(g.medio) + (g.cuotas > 1 ? ' ' + g.cuotas + ' cuotas' : '');
+      return '<li><div><div class="t">' + esc(g.categoria) + (g.descripcion ? ' · <span class="s">' + esc(g.descripcion) + '</span>' : '') +
+        '</div><div class="s">' + sub + '</div></div><div class="m">' + plata(g.monto) +
+        '<div><span class="tag ' + esc(g.atribucion) + '">' + esc(g.atribucion) + '</span></div></div></li>';
+    }).join('');
+  }
+
+  // ---------- Reporte ----------
+  function cargarReporte() {
+    $('mesNombre').textContent = nombreMes(estado.mes);
+    $('mesSiguiente').disabled = estado.mes >= moverMes(mesActual(), 48);
+    var cont = $('reporte');
+    cont.innerHTML = '<div class="card hero"><span class="spin"></span></div>';
+    var pedido = estado.mes;
+    api('reporte', { mes: pedido }).then(function (res) {
+      if (pedido !== estado.mes) return;  // el usuario ya cambió de mes
+      if (!res.ok) throw new Error(res.mensaje);
+      pintarReporte(res.reporte);
+    }).catch(function (e) {
+      if (!e.manejado) cont.innerHTML = '<div class="card"><p class="err">No se pudo cargar el reporte: ' + esc(e.message) + '</p></div>';
+    });
+  }
+
+  function textoSaldo(r) {
+    if (r.saldo > 0) return { quien: 'Antonia le debe a Bastien', cls: 'pos' };
+    if (r.saldo < 0) return { quien: 'Bastien le debe a Antonia', cls: 'neg' };
+    return { quien: 'Están a mano', cls: '' };
+  }
+
+  function pintarReporte(r) {
+    var s = textoSaldo(r);
+    var conDeuda = r.items.filter(function (i) { return i.efecto !== 0; });
+    var max = r.categorias.length ? r.categorias[0].monto : 1;
+
+    var html = '';
+    html += '<div class="card hero"><div class="quien">' + s.quien + '</div>' +
+      '<div class="cuanto ' + s.cls + '">' + plata(Math.abs(r.saldo)) + '</div>' +
+      '<button class="btn sec" type="button" id="btnCopiar" style="margin-top:10px">Copiar resumen</button></div>';
+
+    html += '<div class="card"><h2>Resumen</h2><div class="stats">' +
+      stat('Total del mes', plata(r.total)) + stat('Gastos registrados', r.items.length) +
+      stat('Pagó Bastien', plata(r.pagado.Bastien)) + stat('Pagó Antonia', plata(r.pagado.Antonia)) +
+      stat('Le corresponde a Bastien', plata(r.corresponde.Bastien)) + stat('Le corresponde a Antonia', plata(r.corresponde.Antonia)) +
+      '</div></div>';
+
+    html += '<div class="card"><h2>Gastos que generan deuda</h2>';
+    html += conDeuda.length ? '<ul class="list">' + conDeuda.map(itemHtml).join('') + '</ul>' : '<div class="empty">Ninguno este mes.</div>';
+    html += '</div>';
+
+    html += '<div class="card"><h2>Por categoría</h2>';
+    html += r.categorias.length ? '<ul class="list cats">' + r.categorias.map(function (c) {
+      return '<li><div class="r"><span>' + esc(c.categoria) + '</span><strong>' + plata(c.monto) + '</strong></div>' +
+        '<div class="bar"><i style="width:' + Math.max(2, c.monto / max * 100) + '%"></i></div></li>';
+    }).join('') + '</ul>' : '<div class="empty">Sin gastos este mes.</div>';
+    html += '</div>';
+
+    if (r.items.length) {
+      html += '<div class="card"><details><summary>Ver todos los gastos del mes (' + r.items.length + ')</summary>' +
+        '<ul class="list" style="margin-top:8px">' + r.items.map(itemHtml).join('') + '</ul></details></div>';
+    }
+
+    $('reporte').innerHTML = html;
+    $('btnCopiar').addEventListener('click', function () { copiarResumen(r, s); });
+  }
+
+  function stat(k, v) { return '<div class="stat"><div class="k">' + k + '</div><div class="v">' + v + '</div></div>'; }
+
+  function itemHtml(i) {
+    var efecto = i.efecto > 0 ? '<div class="s pos">Antonia debe ' + plata(i.efecto) + '</div>'
+      : i.efecto < 0 ? '<div class="s neg">Bastien debe ' + plata(-i.efecto) + '</div>' : '';
+    return '<li><div><div class="t">' + esc(i.categoria) + (i.descripcion ? ' · <span class="s">' + esc(i.descripcion) + '</span>' : '') + '</div>' +
+      '<div class="s">' + fechaCorta(i.fecha) + ' · pagó ' + esc(i.pago) + (i.cuota ? ' · cuota ' + i.cuota : '') + '</div></div>' +
+      '<div class="m">' + plata(i.monto) + '<div><span class="tag ' + esc(i.atribucion) + '">' + esc(i.atribucion) + '</span></div>' + efecto + '</div></li>';
+  }
+
+  function copiarResumen(r, s) {
+    var mes = nombreMes(r.mes);
+    var txt = 'Gastos ' + mes + ': ' + (r.saldo === 0 ? 'estamos a mano.' : s.quien + ' ' + plata(Math.abs(r.saldo)) + '.') +
+      '\nTotal del mes: ' + plata(r.total) +
+      '\nPagó Bastien ' + plata(r.pagado.Bastien) + ' · Pagó Antonia ' + plata(r.pagado.Antonia);
+    var hecho = function () { aviso('Resumen copiado'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(hecho, function () { copiarViejo(txt); hecho(); });
+    } else { copiarViejo(txt); hecho(); }
+  }
+  function copiarViejo(txt) {
+    var t = document.createElement('textarea'); t.value = txt; t.setAttribute('readonly', '');
+    t.style.position = 'fixed'; t.style.opacity = '0'; document.body.appendChild(t); t.select();
+    try { document.execCommand('copy'); } catch (e) {} document.body.removeChild(t);
+  }
+
+  $('mesAnterior').addEventListener('click', function () { estado.mes = moverMes(estado.mes, -1); cargarReporte(); });
+  $('mesSiguiente').addEventListener('click', function () { estado.mes = moverMes(estado.mes, 1); cargarReporte(); });
+
+  // ---------- Pestañas ----------
+  function irA(vista) {
+    var nuevo = vista === 'nuevo';
+    $('vistaNuevo').classList.toggle('hidden', !nuevo);
+    $('vistaReporte').classList.toggle('hidden', nuevo);
+    $('tabNuevo').setAttribute('aria-selected', String(nuevo));
+    $('tabReporte').setAttribute('aria-selected', String(!nuevo));
+    $('titulo').textContent = nuevo ? 'Nuevo gasto' : 'Reporte mensual';
+    window.scrollTo(0, 0);
+    if (!nuevo) cargarReporte();
+  }
+  $('tabNuevo').addEventListener('click', function () { irA('nuevo'); });
+  $('tabReporte').addEventListener('click', function () { irA('reporte'); });
+
+  // ---------- Utilidades ----------
+  var toastTimer;
+  function aviso(msg) {
+    var t = $('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2200);
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  // ---------- Arranque ----------
+  $('fecha').value = hoyISO();
+  estado.form.pago = leer('ultimoPago');
+  actualizarVista();
+  if (estado.pin) {
+    iniciar();
+  } else {
+    mostrarPin('');
+  }
+})();
+</script>
+</body>
+</html>
